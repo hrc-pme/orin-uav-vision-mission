@@ -1,0 +1,4 @@
+# Intel RealSense USB video/depth interfaces
+SUBSYSTEM=="usb", ATTR{idVendor}=="8086", MODE:="0660", GROUP:="plugdev"
+# Intel RealSense HID interface used by the D455 accelerometer/gyroscope
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="8086", MODE:="0660", GROUP:="plugdev"

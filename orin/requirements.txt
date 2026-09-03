@@ -1,0 +1,21 @@
+# Orin NX requirements
+flask>=3.0
+flask-socketio>=5.3
+python-socketio>=5.11
+eventlet>=0.36          # WebSocket support (pre-installed on this system)
+
+opencv-python-headless>=4.9,<4.13
+numpy>=1.24,<2.0          # NVIDIA Jetson PyTorch nv24.08 uses the NumPy 1.x ABI
+scipy>=1.13.1            # NumPy 2.x-compatible build required by BoT-SORT
+ultralytics>=8.2
+
+# Flight controller
+pymavlink>=2.4
+pyserial>=3.5           # required by pymavlink
+
+# Optional Intel RealSense D455 support (the competition default is RTSP)
+pyrealsense2>=2.55
+
+# Optional SAM2/SAM3
+# pip install git+https://github.com/facebookresearch/sam2.git
+# pip install git+https://github.com/facebookresearch/sam3.git

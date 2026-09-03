@@ -1,0 +1,12 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+# ByteTrack tracker defaults for mode="track"
+# Docs: https://docs.ultralytics.com/modes/track/
+
+tracker_type: bytetrack # (str) Tracker backend: botsort|bytetrack; choose bytetrack for the classic baseline
+track_high_thresh: 0.35 # keep car tracks stable when confidence briefly drops
+track_low_thresh: 0.10 # allow ByteTrack to associate weak car detections
+new_track_thresh: 0.35 # avoid requiring a single 0.50-confidence frame
+track_buffer: 75 # Preserve an ID for roughly 7.5-15s at the outdoor 5-10Hz inference rate.
+match_thresh: 0.75 # slightly more tolerant association reduces ID/box flicker
+fuse_score: True # (bool) Fuse detection score with motion/IoU for matching; stabilizes weak detections

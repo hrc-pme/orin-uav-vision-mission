@@ -1,0 +1,238 @@
+# D455 任意車輛兩階段接近任務：
+# 100 m 搜尋 -> 自動到車輛粗略位置並降至 50 m -> 低空重新確認
+# -> 等 Unity CONFIRM -> 到精修位置上方 20 m。
+mode: live
+publish_rate_hz: 5
+
+camera_source: realsense
+use_realsense: true
+realsense_serial: "234322304658"
+camera_width: 1280
+camera_height: 720
+camera_fps: 30
+# D455 深度在 20/50/100 m 不可靠；定位使用彩色內參、飛控姿態與 AGL 地平面投影。
+enable_depth: false
+publish_depth: false
+publish_camera_info: false
+publish_camera_info_when_subscribed: true
+publish_d455_imu: false
+
+engine_path: /home/hrc/Downloads/VisDrone_train1_5090best.engine
+fallback_model_path: /home/hrc/Downloads/VisDrone_train1_5090best.pt
+detector_backend: ultralytics_engine
+tracker: /home/hrc/xin_uav/unity/bytetrack.yaml
+target_classes: [car]
+target_color_mode: any
+class_name_override: car
+confidence_threshold: 0.25
+target_confirm_frames: 5
+target_confirm_seconds: 1.5
+# 同一位置的車短暫漏偵測或 ByteTrack 換 ID 時延續確認次數。
+target_streak_hold_s: 5.0
+target_streak_match_iou: 0.35
+max_candidates: 10
+candidate_id_prefix: car
+continuous_candidate_geolocation: true
+# Unity 只畫已連續確認的最佳一台車；所有原始偵測仍保留在 JSON/rosbag。
+draw_non_white_detections: false
+detection_display_max_age_s: 0.7
+visual_display_max_detections: 1
+draw_navigation_safe_region: false
+# YOLO 漏偵測時，以目前影像中的車輛外觀繼續移動 TRACK 框。
+# 連續兩張找不到相同外觀就立即移除；TRACK 框絕不會當成導航座標。
+visual_detection_hold_s: 15.0
+visual_detection_deduplicate_iou: 0.35
+visual_tracking_min_score: 0.55
+visual_tracking_search_expansion: 1.0
+visual_tracking_miss_frames: 2
+candidate_jpeg_quality: 55
+# 右側確認窗只傳一次偵測車輛的壓縮截圖，不拿即時串流當預覽。
+include_candidate_image_base64: true
+candidate_image_max_width: 256
+candidate_image_max_height: 160
+# Unity 斷線重連仍可拿到截圖，但正常運作時不必每 0.2 秒重傳。
+candidate_image_resend_interval_s: 5.0
+# Unity 主畫面只收標註後的壓縮 JPEG；不發布 raw，QoS 只保留最新一張避免延遲堆積。
+publish_raw_compressed: false
+# Unity 不訂閱 raw；只有 rosbag/CSV logger 訂閱時才啟用全解析度 RGB，平時沒有額外負載。
+publish_raw_compressed_when_subscribed: true
+raw_jpeg_quality: 70
+raw_publish_image_max_width: 1280
+raw_publish_image_max_height: 720
+publish_annotated_compressed: true
+image_qos_depth: 1
+jpeg_quality: 48
+publish_image_max_width: 400
+publish_image_max_height: 225
+
+mock_gps: false
+mock_imu: false
+mavlink_enabled: true
+mavlink_port: /dev/ttyACM0
+mavlink_baud: 115200
+mavlink_bauds: [115200]
+mavlink_heartbeat_timeout_s: 2.0
+mavlink_request_message_rates: true
+mavlink_target_system: 0
+mavlink_target_component: 0
+gps_min_fix_type: 3
+gps_stale_timeout_s: 3.0
+gps_display_hold_s: 10.0
+
+# 這組外參表示 D455 彩色鏡頭光軸垂直朝下。實機安裝角度不同時必須先校正。
+camera_mount_rpy_deg: [0.0, -90.0, 0.0]
+camera_offset_frd_m: [0.0, 0.0, 0.0]
+attitude_error_deg: 3.0
+geolocation_filter_window: 7
+
+enable_flight_control: true
+simulate_flight_commands: false
+allowed_flight_modes: [GUIDED]
+auto_switch_to_guided: true
+guided_mode_name: GUIDED
+auto_switch_guided_from_modes: [AUTO, LOITER, POSHOLD, GUIDED, GPS, POSITION, POSITION_HOLD, POSCTL, HOLD, BRAKE]
+mode_change_timeout_s: 5.0
+minimum_flight_altitude_m: 10.0
+minimum_gps_satellites: 8
+maximum_gps_eph_m: 5.0
+minimum_battery_voltage_v: 21.0
+minimum_battery_remaining_pct: 50
+preflight_mavlink_sample_seconds: 8.0
+maximum_target_error_m: 25.0
+maximum_goto_distance_m: 150.0
+# 完成低空驗證後保留短暫的人工作業時間；超過仍拒絕舊座標。
+target_max_age_s: 6.0
+candidate_archive_age_s: 30.0
+candidate_display_hold_s: 10.0
+target_position_require_gps: true
+command_target_match_distance_m: 8.0
+
+# 自動驗證階段。只有 70--130 m、穩定且通過全部飛控安全條件的車輛才會觸發。
+enable_auto_verification: true
+auto_verification_min_start_altitude_m: 80.0
+auto_verification_max_start_altitude_m: 130.0
+auto_verification_min_confidence: 0.55
+auto_verification_max_initial_error_m: 25.0
+# 高空邊緣框的地面投影誤差太大。車必須完整進入中央 64% 區域並穩定 3 秒。
+auto_verification_min_edge_margin_ratio: 0.18
+auto_verification_min_stable_seconds: 3.0
+auto_verification_detection_max_age_s: 1.0
+verification_altitude_m: 60.0
+verification_arrival_radius_m: 35.0
+verification_altitude_tolerance_m: 5.0
+verification_detection_max_age_s: 1.5
+verification_retarget_enabled: true
+verification_retarget_max_altitude_m: 70.0
+verification_retarget_min_shift_m: 2.0
+# 低空重新定位也不採用貼著畫面邊界、可能被裁切的車框。
+verification_min_edge_margin_ratio: 0.05
+# 高空粗定位本身允許 25 m 誤差；低空 Track ID 改變時，以鄰近座標接續同一車。
+verification_match_radius_m: 50.0
+verification_continuity_radius_m: 15.0
+verification_max_position_error_m: 12.0
+verification_confirm_seconds: 1.5
+verification_min_samples: 5
+# YOLO/ByteTrack 短暫漏框不清除已累積的有效定位；超過此時間才重新確認。
+verification_miss_grace_s: 6.0
+# 完成 5 筆驗證後，給 Unity 操作者 5 秒按 CONFIRM；逾時重新驗證。
+verification_ready_hold_s: 5.0
+verification_timeout_s: 120.0
+approach_health_grace_s: 3.0
+
+# Unity CONFIRM 後的最後階段。
+goto_ground_speed_mps: 2.5
+goto_relative_altitude_m: 20.0
+arrival_radius_m: 4.0
+arrival_altitude_tolerance_m: 3.0
+arrival_confirm_seconds: 2
+goto_timeout_s: 120.0
+
+# Above 80 m, lock one car but do not move until Unity CONFIRM.  The outdoor
+# thesis mode centers that one car at constant altitude, descends one bounded
+# altitude step, holds/recenters, then continues to 20 m.  The older successful
+# fixed-position descent remains below as a one-line rollback option.
+direct_visual_servo_enabled: true
+staircase_visual_servo_enabled: false
+staircase_fixed_descent_handoff_enabled: true
+staircase_handoff_altitude_m: 60.0
+staircase_handoff_altitude_tolerance_m: 1.0
+staircase_handoff_center_ratio: 0.20
+staircase_handoff_center_hold_s: 0.0
+staircase_handoff_detection_grace_s: 3.0
+staircase_hold_heading_enabled: true
+staircase_altitude_steps_m: [100.0, 80.0, 70.0, 60.0]
+staircase_confirm_min_edge_margin_ratio: 0.08
+staircase_center_deadband_ratio: 0.05
+staircase_center_ratio: 0.15
+staircase_descent_pause_ratio: 0.25
+staircase_center_hold_s: 0.6
+staircase_final_center_hold_s: 2.0
+staircase_altitude_tolerance_m: 0.7
+staircase_error_filter_alpha: 0.25
+staircase_horizontal_gain_mps: 0.55
+staircase_horizontal_accel_limit_mps2: 0.12
+staircase_forward_from_image_y_sign: 1.0
+staircase_right_from_image_x_sign: 1.0
+staircase_max_horizontal_speed_mps: 0.20
+staircase_max_horizontal_speed_below_50_mps: 0.15
+staircase_max_horizontal_speed_below_30_mps: 0.10
+staircase_descent_speed_high_mps: 0.80
+staircase_descent_speed_mid_mps: 0.60
+staircase_descent_speed_low_mps: 0.30
+staircase_descent_horizontal_scale: 0.40
+staircase_max_total_horizontal_correction_m: 15.0
+staircase_divergence_improvement_margin: 0.02
+staircase_divergence_error_margin: 0.20
+staircase_divergence_hold_s: 2.5
+staircase_same_track_min_appearance_score: 0.15
+staircase_reid_max_gap_s: 3.0
+staircase_reid_bbox_gate_px: 90.0
+staircase_reid_min_appearance_score: 0.72
+
+# Proven rollback mode from the three successful 2026-07-29 flights.
+direct_fixed_position_descent_after_confirm: true
+direct_fixed_position_confirm_center_ratio: 0.60
+direct_fixed_position_confirm_max_detection_age_s: 1.0
+direct_fixed_position_arrival_radius_m: 3.0
+direct_fixed_position_max_drift_m: 10.0
+direct_visual_confirm_min_altitude_m: 80.0
+direct_visual_confirm_max_altitude_m: 130.0
+direct_visual_command_interval_s: 0.20
+direct_visual_horizontal_gain_mps: 3.0
+direct_visual_max_horizontal_speed_mps: 2.0
+direct_visual_max_horizontal_speed_below_40_mps: 1.0
+direct_visual_max_horizontal_speed_below_25_mps: 0.6
+direct_visual_center_deadband_ratio: 0.025
+direct_visual_descent_gate_ratio: 0.20
+direct_visual_descent_speed_high_mps: 0.8
+direct_visual_descent_speed_mid_mps: 0.5
+direct_visual_descent_speed_low_mps: 0.25
+direct_visual_completion_center_ratio: 0.06
+direct_visual_completion_hold_s: 2.0
+direct_visual_altitude_tolerance_m: 0.6
+
+# Legacy GPS-retarget path remains available only when direct visual servo is
+# disabled. These settings are kept for rollback compatibility.
+final_tracking_intermediate_altitude_m: 30.0
+final_tracking_detection_max_age_s: 0.7
+final_tracking_min_box_confidence: 0.45
+final_tracking_max_position_error_m: 20.0
+final_tracking_match_radius_m: 50.0
+final_tracking_bbox_gate_px: 160.0
+final_tracking_bbox_gate_growth_px_s: 80.0
+final_tracking_bbox_gate_max_px: 320.0
+final_tracking_confirm_bbox_gate_px: 100.0
+final_tracking_min_appearance_score: 0.50
+final_tracking_same_track_min_appearance_score: 0.15
+final_tracking_template_bank_size: 8
+final_tracking_retarget_interval_s: 0.8
+final_tracking_min_retarget_shift_m: 0.8
+final_tracking_max_retarget_shift_m: 35.0
+final_tracking_center_tolerance_ratio: 1.0
+final_tracking_pause_offset_ratio: 1.0
+final_tracking_center_hold_s: 0.2
+final_tracking_completion_center_ratio: 0.12
+final_tracking_completion_center_hold_s: 1.0
+final_tracking_lost_hold_s: 2.5
+final_tracking_altitude_tolerance_m: 2.5
+final_tracking_timeout_s: 300.0

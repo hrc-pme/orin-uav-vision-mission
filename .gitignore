@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*~
+.DS_Store
+
+# Local automation state
+.agents/
+.codex/
+
+# Logs, recordings, and generated mission data
+*.log
+*.bag
+*.db3
+*.db3.zstd
+*.mcap
+*.csv
+*.jsonl
+recordings/
+debug_output/
+replay_logs/
+bag_validation_outputs/
+topic_preview_samples/
+compressed_images/
+candidate_images/
+
+# Generated media and temporary artifacts
+*.avi
+*.mp4
+*.mov
+*.gif
+*.jpg
+*.jpeg
+*.png
+*.tmp
+*.temp
+*.bak
+*.bak_*
+*.b64tmp
+
+# ML weights and hardware-specific TensorRT engines
+*.pt
+*.pth
+*.onnx
+*.engine
+*.plan
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Large archives
+*.tar
+*.tar.gz
+*.tgz
+*.zip
